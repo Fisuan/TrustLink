@@ -1,5 +1,5 @@
 {
-  "name": "nepitcht",
+  "name": "TrustLink",
   "main": "expo-router/entry",
   "license": "0BSD",
   "version": "1.0.0",
@@ -17,6 +17,7 @@
     "@expo/vector-icons": "^14.0.2",
     "@react-navigation/native": "^7.0.19",
     "@react-navigation/stack": "^7.2.3",
+    "@twilio/conversations": "^2.6.2",
     "expo": "~52.0.41",
     "expo-av": "~15.0.2",
     "expo-font": "~13.0.4",
