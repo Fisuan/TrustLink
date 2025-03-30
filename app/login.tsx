@@ -4,9 +4,6 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "./contexts/AuthContext";
 
-// В реальном приложении использовать SecureStore
-// import * as SecureStore from 'expo-secure-store';
-
 const LoginScreen = () => {
   const router = useRouter();
   const { login, isLoading } = useAuth();

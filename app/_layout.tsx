@@ -10,19 +10,33 @@ function RootLayoutNav() {
   const router = useRouter();
 
   useEffect(() => {
-    // Отключаем принудительный редирект при отсутствии токена,
-    // чтобы приложение работало без бэкенда
-    
-    // Редиректим только если пользователь залогинен и находится на странице логина или регистрации
-    if (!isLoading && userToken) {
-      const isAuthPage = segments[0] === 'login' || segments[0] === 'register';
-      if (isAuthPage) {
-        router.replace('/');
-      }
+    if (isLoading) return;
+
+    const isInAuthGroup = segments[0] === "(tabs)";
+
+    if (!userToken && isInAuthGroup) {
+      // Разрешаем гостевой доступ
+    } else if (userToken && (segments[0] === "login" || segments[0] === "register")) {
+      // Перенаправляем только после полной загрузки
+      setTimeout(() => {
+        router.replace('/(tabs)/home' as any);
+      }, 0);
     }
   }, [userToken, segments, isLoading]);
 
-  return <Slot />;
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="login" options={{ title: "Вход", headerShown: true }} />
+      <Stack.Screen name="register" options={{ title: "Регистрация", headerShown: true }} />
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="news" options={{ title: "Новости", headerShown: true }} />
+      <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+      <Stack.Screen name="report" options={{ title: "Сообщить", headerShown: true }} />
+      <Stack.Screen name="emergency" options={{ title: "SOS", headerShown: true }} />
+      <Stack.Screen name="operator" options={{ title: "Интерфейс оператора", headerShown: false }} />
+    </Stack>
+  );
 }
 
 export default function RootLayout() {

@@ -1,147 +1,70 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
-import { useRouter } from "expo-router";
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import React, { useEffect, useState } from "react";
+import { Text, View, StyleSheet, ActivityIndicator, Image } from "react-native";
+import { Link, useRouter } from "expo-router";
 
-const HomeScreen = () => {
+export default function Index() {
   const router = useRouter();
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const loadingInterval = setInterval(() => {
+      setProgress(prevProgress => {
+        const newProgress = prevProgress + (Math.random() * 15);
+        if (newProgress >= 100) {
+          clearInterval(loadingInterval);
+          // Перенаправляем на главную после окончания анимации загрузки
+          setTimeout(() => {
+            router.replace('/(tabs)/home' as any);
+          }, 500);
+          return 100;
+        }
+        return newProgress;
+      });
+    }, 400);
+
+    return () => clearInterval(loadingInterval);
+  }, []);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Безопасность</Text>
-
-      {/* Основные кнопки */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.buttonEmergency} onPress={() => router.push("/emergency")}>
-          <Ionicons name="alert-circle" size={30} color="#fff" />
-          <Text style={styles.buttonText}>Экстренный вызов</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.button} onPress={() => router.push("/report")}>
-          <MaterialIcons name="report-problem" size={30} color="#000" />
-          <Text style={styles.buttonTextBlack}>Сообщить о происшествии</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.button} onPress={() => router.push("/chat")}>
-          <Ionicons name="chatbubbles" size={30} color="#000" />
-          <Text style={styles.buttonTextBlack}>Чат с оператором</Text>
-        </TouchableOpacity>
+      <Text style={styles.title}>TRUSTLINK</Text>
+      <View style={styles.progressContainer}>
+        <View style={[styles.progressBar, { width: `${progress}%` }]} />
       </View>
-
-      {/* Лента */}
-      <View style={styles.newsFeed}>
-        <Text style={styles.newsHeader}>Новости безопасности</Text>
-
-        <ScrollView style={styles.newsScroll} showsVerticalScrollIndicator={false}>
-          {[
-            { title: "⚠ Внимание! Новые мошеннические схемы", text: "Будьте осторожны: участились случаи звонков от фальшивых сотрудников банков..." },
-            { title: "🚨 Срочное предупреждение", text: "Сегодня в 17:30 зафиксировано ЧП в районе центра города..." },
-            { title: "🏢 Новый участковый пункт полиции в Астане", text: "В районе Байконыр по ул. Янушкевича, 10 открылся УПП № 20...." },
-          ].map((news, index) => (
-            <View key={index} style={styles.newsItem}>
-              <Text style={styles.newsTitle}>{news.title}</Text>
-              <Text style={styles.newsText}>{news.text}</Text>
-            </View>
-          ))}
-        </ScrollView>
-
-        {/* Кнопка */}
-        <TouchableOpacity style={styles.moreNewsButton} onPress={() => router.push("/news")}>
-          <Text style={styles.moreNewsText}>Больше новостей</Text>
-        </TouchableOpacity>
-      </View>
+      <Text style={styles.subtitle}>Загрузка... {Math.round(progress)}%</Text>
     </View>
   );
-};
+}
 
-// Стили
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
-    paddingHorizontal: 20,
-    paddingTop: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#F5F5F5',
   },
-  header: {
-    fontSize: 26,
-    fontWeight: "bold",
-    marginBottom: 20,
+  title: {
+    fontSize: 42,
+    fontWeight: 'bold',
+    marginBottom: 30,
+    letterSpacing: 2,
+    color: '#000',
   },
-  buttonContainer: {
-    marginBottom: 20,
-  },
-  buttonEmergency: {
-    backgroundColor: "#E53935",
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-    marginBottom: 10,
-  },
-  button: {
-    backgroundColor: "#FFF",
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: "#DDD",
-  },
-  buttonText: {
-    color: "#FFF",
+  subtitle: {
     fontSize: 16,
-    fontWeight: "bold",
-    marginLeft: 10,
-  },
-  buttonTextBlack: {
-    color: "#000",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginLeft: 10,
-  },
-  newsFeed: {
-    flex: 1,
-    backgroundColor: "#FFF",
-    borderRadius: 10,
-    padding: 15,
-  },
-  newsHeader: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  newsScroll: {
-    maxHeight: 500, 
-  },
-  newsItem: {
-    marginBottom: 10,
-    padding: 10,
-    backgroundColor: "#E3F2FD",
-    borderRadius: 5,
-  },
-  newsTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  newsText: {
-    fontSize: 14,
-    color: "#444",
-  },
-  moreNewsButton: {
-    backgroundColor: "#1976D2",
-    padding: 10,
-    borderRadius: 5,
-    alignItems: "center",
+    color: '#666',
     marginTop: 10,
   },
-  moreNewsText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "bold",
+  progressContainer: {
+    width: '80%',
+    height: 8,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 4,
+    overflow: 'hidden',
   },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#007AFF',
+  }
 });
-
-export default HomeScreen;

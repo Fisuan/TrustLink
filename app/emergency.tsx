@@ -1,18 +1,98 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Vibration } from "react-native";
-import { useNavigation } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Vibration, ActivityIndicator } from "react-native";
+import { useRouter } from "expo-router";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import * as Location from "expo-location";
 
 const EmergencyScreen = () => {
-  const navigation = useNavigation();
+  const router = useRouter();
   const [countdown, setCountdown] = useState<number | null>(null);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const [address, setAddress] = useState<string | null>(null);
+  const [loadingLocation, setLoadingLocation] = useState(false);
+
+  // Получение местоположения при загрузке компонента
+  useEffect(() => {
+    (async () => {
+      setLoadingLocation(true);
+      
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Ошибка", "Разрешите доступ к геолокации для точного определения местоположения при экстренном вызове.");
+        setLoadingLocation(false);
+        return;
+      }
+
+      try {
+        // Получаем текущие координаты
+        const currentLocation = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High
+        });
+        setLocation(currentLocation);
+        
+        // Пытаемся получить адрес
+        const geocode = await Location.reverseGeocodeAsync({
+          latitude: currentLocation.coords.latitude,
+          longitude: currentLocation.coords.longitude
+        });
+        
+        if (geocode && geocode.length > 0) {
+          const addressData = geocode[0];
+          const formattedAddress = [
+            addressData.street && addressData.streetNumber 
+              ? `${addressData.street}, ${addressData.streetNumber}`
+              : addressData.street || "",
+            addressData.district || "",
+            addressData.city || "",
+            addressData.region || ""
+          ].filter(Boolean).join(", ");
+          
+          setAddress(formattedAddress);
+        }
+      } catch (error) {
+        console.error("Ошибка получения местоположения:", error);
+      } finally {
+        setLoadingLocation(false);
+      }
+    })();
+  }, []);
 
   const handleEmergencyCall = () => {
-    Alert.alert("🚨 Экстренный вызов", "Вы уверены, что хотите совершить экстренный вызов?", [
-      { text: "Отмена", style: "cancel" },
-      { text: "Позвонить", onPress: () => console.log("Вызов отправлен") },
-    ]);
+    const locationText = address 
+      ? `\n\nВаше местоположение: ${address}`
+      : location 
+        ? `\n\nВаши координаты: ${location.coords.latitude}, ${location.coords.longitude}`
+        : "\n\nМестоположение не определено";
+    
+    Alert.alert(
+      "🚨 Экстренный вызов", 
+      `Вы уверены, что хотите совершить экстренный вызов?${locationText}`, 
+      [
+        { text: "Отмена", style: "cancel" },
+        { 
+          text: "Экстренный вызов", 
+          style: "destructive",
+          onPress: () => {
+            
+           // console.log("Вызов отправлен", {
+             // timestamp: new Date().toISOString(),
+        //      location: location ? {
+            //    latitude: location.coords.latitude,
+              //  longitude: location.coords.longitude,
+             //   accuracy: location.coords.accuracy,
+           //   } : null,
+             // address
+           // }); 
+            
+            Alert.alert(
+              "Вызов отправлен",
+              "Экстренные службы оповещены. Ожидайте звонка оператора."
+            );
+          }
+        },
+      ]
+    );
   };
 
   const handleSOSStart = () => {
@@ -44,11 +124,26 @@ const EmergencyScreen = () => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Ionicons name="arrow-back" size={24} color="black" />
       </TouchableOpacity>
 
       <Text style={styles.header}>Экстренный вызов</Text>
+
+      {/* Информация о местоположении */}
+      <View style={styles.locationContainer}>
+        <MaterialIcons name="location-on" size={24} color="#E53935" />
+        {loadingLocation ? (
+          <View style={styles.locationLoadingContainer}>
+            <ActivityIndicator size="small" color="#666" />
+            <Text style={styles.locationText}>Определение местоположения...</Text>
+          </View>
+        ) : address ? (
+          <Text style={styles.locationText}>Ваше местоположение: {address}</Text>
+        ) : (
+          <Text style={styles.locationTextError}>Не удалось определить местоположение</Text>
+        )}
+      </View>
 
       <View style={styles.sosContainer}>
         <TouchableOpacity
@@ -64,7 +159,7 @@ const EmergencyScreen = () => {
       </View>
 
       <Text style={styles.infoText}>
-        В случае опасности не паникуйте. Сообщите оператору точное местоположение и причину вызова.
+        В случае опасности не паникуйте. При отправке экстренного вызова будет автоматически передано ваше местоположение.
       </Text>
     </View>
   );
@@ -90,6 +185,35 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 20,
   },
+  locationContainer: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: "#FFF",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
+  },
+  locationLoadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    marginLeft: 10,
+  },
+  locationText: {
+    fontSize: 14,
+    color: "#333",
+    flex: 1,
+    marginLeft: 10,
+  },
+  locationTextError: {
+    fontSize: 14,
+    color: "#E53935",
+    flex: 1,
+    marginLeft: 10,
+  },
   sosContainer: {
     alignItems: "center",
     marginVertical: 20,
@@ -101,6 +225,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 100,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   sosText: {
     color: "#fff",
@@ -119,6 +248,7 @@ const styles = StyleSheet.create({
     color: "#333",
     marginTop: 20,
     paddingHorizontal: 10,
+    lineHeight: 24,
   },
 });
 

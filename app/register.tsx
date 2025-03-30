@@ -4,6 +4,16 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "./contexts/AuthContext";
 
+// Интерфейс для подсказок по валидации
+interface FieldErrors {
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+}
+
 const RegisterScreen = () => {
   const router = useRouter();
   const { register, isLoading } = useAuth();
@@ -15,6 +25,7 @@ const RegisterScreen = () => {
     lastName: "",
     phone: ""
   });
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [localLoading, setLocalLoading] = useState(false);
 
   const handleInputChange = (field, value) => {
@@ -22,19 +33,70 @@ const RegisterScreen = () => {
       ...formData,
       [field]: value
     });
+    
+    // Сбрасываем ошибку при изменении поля
+    if (errors[field]) {
+      setErrors({
+        ...errors,
+        [field]: undefined
+      });
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const { email, password, confirmPassword, firstName, lastName, phone } = formData;
+    const newErrors: FieldErrors = {};
+    let isValid = true;
+    
+    if (!email) {
+      newErrors.email = "Введите электронную почту";
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Некорректный формат email";
+      isValid = false;
+    }
+    
+    if (!password) {
+      newErrors.password = "Введите пароль";
+      isValid = false;
+    } else if (password.length < 6) {
+      newErrors.password = "Пароль должен содержать минимум 6 символов";
+      isValid = false;
+    }
+    
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "Подтвердите пароль";
+      isValid = false;
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = "Пароли не совпадают";
+      isValid = false;
+    }
+    
+    if (!firstName) {
+      newErrors.firstName = "Введите имя";
+      isValid = false;
+    }
+    
+    if (!lastName) {
+      newErrors.lastName = "Введите фамилию";
+      isValid = false;
+    }
+    
+    if (!phone) {
+      newErrors.phone = "Введите номер телефона";
+      isValid = false;
+    } else if (!/^\+?[0-9\s\-\(\)]{10,15}$/.test(phone)) {
+      newErrors.phone = "Некорректный формат телефона";
+      isValid = false;
+    }
+    
+    setErrors(newErrors);
+    return isValid;
   };
 
   const handleRegister = async () => {
-    // Валидация
-    const { email, password, confirmPassword, firstName, lastName, phone } = formData;
-    
-    if (!email || !password || !confirmPassword || !firstName || !lastName || !phone) {
-      Alert.alert("Ошибка", "Пожалуйста, заполните все поля");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      Alert.alert("Ошибка", "Пароли не совпадают");
+    // Валидация формы
+    if (!validateForm()) {
       return;
     }
 
@@ -43,11 +105,11 @@ const RegisterScreen = () => {
       
       // Подготовка данных для API
       const userData = {
-        email,
-        password,
-        first_name: firstName,
-        last_name: lastName,
-        phone
+        email: formData.email,
+        password: formData.password,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        phone: formData.phone
       };
       
       await register(userData);
@@ -78,58 +140,76 @@ const RegisterScreen = () => {
         </View>
 
         <View style={styles.formContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Имя"
-            value={formData.firstName}
-            onChangeText={(value) => handleInputChange("firstName", value)}
-            editable={!showLoading}
-          />
+          <View style={styles.inputGroup}>
+            <TextInput
+              style={[styles.input, errors.firstName && styles.inputError]}
+              placeholder="Имя"
+              value={formData.firstName}
+              onChangeText={(value) => handleInputChange("firstName", value)}
+              editable={!showLoading}
+            />
+            {errors.firstName && <Text style={styles.errorText}>{errors.firstName}</Text>}
+          </View>
           
-          <TextInput
-            style={styles.input}
-            placeholder="Фамилия"
-            value={formData.lastName}
-            onChangeText={(value) => handleInputChange("lastName", value)}
-            editable={!showLoading}
-          />
+          <View style={styles.inputGroup}>
+            <TextInput
+              style={[styles.input, errors.lastName && styles.inputError]}
+              placeholder="Фамилия"
+              value={formData.lastName}
+              onChangeText={(value) => handleInputChange("lastName", value)}
+              editable={!showLoading}
+            />
+            {errors.lastName && <Text style={styles.errorText}>{errors.lastName}</Text>}
+          </View>
           
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={formData.email}
-            onChangeText={(value) => handleInputChange("email", value)}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            editable={!showLoading}
-          />
+          <View style={styles.inputGroup}>
+            <TextInput
+              style={[styles.input, errors.email && styles.inputError]}
+              placeholder="Email"
+              value={formData.email}
+              onChangeText={(value) => handleInputChange("email", value)}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              editable={!showLoading}
+            />
+            {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+          </View>
           
-          <TextInput
-            style={styles.input}
-            placeholder="Телефон"
-            value={formData.phone}
-            onChangeText={(value) => handleInputChange("phone", value)}
-            keyboardType="phone-pad"
-            editable={!showLoading}
-          />
+          <View style={styles.inputGroup}>
+            <TextInput
+              style={[styles.input, errors.phone && styles.inputError]}
+              placeholder="Телефон"
+              value={formData.phone}
+              onChangeText={(value) => handleInputChange("phone", value)}
+              keyboardType="phone-pad"
+              editable={!showLoading}
+            />
+            {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
+          </View>
           
-          <TextInput
-            style={styles.input}
-            placeholder="Пароль"
-            value={formData.password}
-            onChangeText={(value) => handleInputChange("password", value)}
-            secureTextEntry
-            editable={!showLoading}
-          />
+          <View style={styles.inputGroup}>
+            <TextInput
+              style={[styles.input, errors.password && styles.inputError]}
+              placeholder="Пароль"
+              value={formData.password}
+              onChangeText={(value) => handleInputChange("password", value)}
+              secureTextEntry
+              editable={!showLoading}
+            />
+            {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+          </View>
           
-          <TextInput
-            style={styles.input}
-            placeholder="Подтверждение пароля"
-            value={formData.confirmPassword}
-            onChangeText={(value) => handleInputChange("confirmPassword", value)}
-            secureTextEntry
-            editable={!showLoading}
-          />
+          <View style={styles.inputGroup}>
+            <TextInput
+              style={[styles.input, errors.confirmPassword && styles.inputError]}
+              placeholder="Подтверждение пароля"
+              value={formData.confirmPassword}
+              onChangeText={(value) => handleInputChange("confirmPassword", value)}
+              secureTextEntry
+              editable={!showLoading}
+            />
+            {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
+          </View>
 
           <TouchableOpacity 
             style={styles.registerButton} 
@@ -185,14 +265,27 @@ const styles = StyleSheet.create({
   formContainer: {
     width: "100%",
   },
+  inputGroup: {
+    marginBottom: 15,
+  },
   input: {
     backgroundColor: "#FFF",
     padding: 15,
     borderRadius: 8,
-    marginBottom: 15,
     fontSize: 16,
     borderWidth: 1,
     borderColor: "#DDD",
+  },
+  inputError: {
+    borderColor: "#E53935",
+    borderWidth: 1,
+  },
+  errorText: {
+    color: "#E53935",
+    fontSize: 14,
+    marginTop: 5,
+    marginLeft: 5,
+    fontWeight: "500",
   },
   registerButton: {
     backgroundColor: "#28A745",

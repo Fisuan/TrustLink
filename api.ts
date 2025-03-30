@@ -378,4 +378,141 @@ export const connectToChat = (
     console.error('WebSocket connection error:', error);
     throw error;
   }
-}; 
+};
+
+// ======== Operator API ========
+
+/**
+ * Функция логина оператора
+ */
+export async function loginOperator(email: string, password: string): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/chat/operator/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const responseText = await response.text();
+    let data;
+    
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Ошибка парсинга JSON:', responseText);
+      throw new Error(`Некорректный ответ сервера: ${responseText}`);
+    }
+
+    if (!response.ok) {
+      throw new Error(data.detail || 'Ошибка входа');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Ошибка при логине оператора:', error);
+    throw error;
+  }
+}
+
+/**
+ * Получение всех инцидентов для оператора
+ */
+export async function getOperatorIncidents(token: string): Promise<any[]> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/chat/operator/incidents?token=${token}`);
+    
+    const responseText = await response.text();
+    let data;
+    
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Ошибка парсинга JSON:', responseText);
+      throw new Error(`Некорректный ответ сервера: ${responseText}`);
+    }
+
+    if (!response.ok) {
+      throw new Error(data.detail || 'Ошибка получения инцидентов');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Ошибка при получении инцидентов:', error);
+    throw error;
+  }
+}
+
+/**
+ * Получение сообщений для конкретного инцидента
+ */
+export async function getOperatorIncidentMessages(token: string, incidentId: string | number): Promise<any[]> {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/chat/operator/incidents/${incidentId}/messages?token=${token}`
+    );
+    
+    const responseText = await response.text();
+    let data;
+    
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Ошибка парсинга JSON:', responseText);
+      throw new Error(`Некорректный ответ сервера: ${responseText}`);
+    }
+
+    if (!response.ok) {
+      throw new Error(data.detail || 'Ошибка получения сообщений');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Ошибка при получении сообщений:', error);
+    throw error;
+  }
+}
+
+/**
+ * Отправка сообщения от имени оператора
+ */
+export async function sendOperatorMessage(
+  token: string, 
+  incidentId: string | number, 
+  message: string, 
+  operatorName: string = 'Оператор'
+): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/chat/operator/send-message?token=${token}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        incident_id: incidentId,
+        message: message,
+        operator_name: operatorName,
+      }),
+    });
+    
+    const responseText = await response.text();
+    let data;
+    
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Ошибка парсинга JSON:', responseText);
+      throw new Error(`Некорректный ответ сервера: ${responseText}`);
+    }
+
+    if (!response.ok) {
+      throw new Error(data.detail || 'Ошибка отправки сообщения');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Ошибка при отправке сообщения:', error);
+    throw error;
+  }
+} 

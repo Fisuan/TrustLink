@@ -54,4 +54,15 @@ export const sendMessageToChannel = async (messageText) => {
 };
 
 // Get the current channel
-export const getCurrentChannel = () => currentChannel; 
+export const getCurrentChannel = () => currentChannel;
+
+// Object containing all utility functions
+const TwilioClient = {
+  initTwilioClient,
+  joinOrCreateConversation,
+  sendMessageToChannel,
+  getCurrentChannel
+};
+
+// Default export
+export default TwilioClient; 
