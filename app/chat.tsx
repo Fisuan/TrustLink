@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, KeyboardAvoidingView, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { connectToChat } from '../api'; // Импортируйте API
 
 type Message = {
   id: number;
@@ -13,44 +12,13 @@ type Message = {
 const ChatScreen = () => {
   const router = useRouter();
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [socket, setSocket] = useState<WebSocket | null>(null);
-  const incidentId = 1; 
-  const token = "your_token"; 
-
-  useEffect(() => {
-    const ws = connectToChat(incidentId, token);
-    
-    ws.onopen = () => {
-      console.log('WebSocket Connected');
-    };
-    
-    ws.onmessage = (e) => {
-      const data = JSON.parse(e.data);
-      if (data.type === 'new_message') {
-        setMessages((prev) => [...prev, data.data]);
-      }
-    };
-    
-    ws.onclose = () => {
-      console.log('WebSocket Disconnected');
-    };
-    
-    setSocket(ws);
-    
-    return () => {
-      if (ws) {
-        ws.close();
-      }
-    };
-  }, [incidentId, token]);
+  const [messages, setMessages] = useState([
+    { id: 1, text: "Здравствуйте! Чем могу помочь?", isOperator: true },
+  ]);
 
   const sendMessage = () => {
-    if (message.trim() && socket) {
-      socket.send(JSON.stringify({
-        type: 'message',
-        content: message,
-      }));
+    if (message.trim()) {
+      setMessages([...messages, { id: Date.now(), text: message, isOperator: false }]);
       setMessage("");
     }
   };
